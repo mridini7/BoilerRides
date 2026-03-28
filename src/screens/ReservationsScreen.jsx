@@ -1,21 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 
 export default function ReservationsScreen() {
   const { getReservations, cancelReservation, setScreen } = useApp()
   const [tab, setTab] = useState('upcoming')
+  const [all, setAll] = useState([])
+  const [loading, setLoading] = useState(true)
   const [confirmingId, setConfirmingId] = useState(null)
-  const [all, setAll] = useState(() => getReservations())
+  const [cancelling, setCancelling] = useState(false)
+
+  useEffect(() => {
+    getReservations().then(setAll).finally(() => setLoading(false))
+  }, [])
 
   const today = new Date().setHours(0, 0, 0, 0)
   const upcoming = all.filter(r => new Date(r.date).getTime() >= today)
   const past     = all.filter(r => new Date(r.date).getTime() <  today)
   const list = tab === 'upcoming' ? upcoming : past
 
-  const handleCancel = (r) => {
-    cancelReservation(r)
-    setAll(getReservations())
-    setConfirmingId(null)
+  const handleCancel = async (r) => {
+    setCancelling(true)
+    try {
+      await cancelReservation(r._id)
+      setAll(prev => prev.filter(x => x._id !== r._id))
+      setConfirmingId(null)
+    } finally {
+      setCancelling(false)
+    }
   }
 
   return (
@@ -34,7 +45,9 @@ export default function ReservationsScreen() {
       </div>
 
       <div className="px-5 flex flex-col gap-4">
-        {list.length === 0 ? (
+        {loading ? (
+          <p className="text-gray-400 text-center py-16">Loading…</p>
+        ) : list.length === 0 ? (
           <div className="flex flex-col items-center py-16 gap-4">
             <span className="text-5xl">🗓️</span>
             <p className="text-gray-400 text-center">No {tab} reservations yet.</p>
@@ -45,7 +58,7 @@ export default function ReservationsScreen() {
             )}
           </div>
         ) : list.map(r => (
-          <div key={r.id} className="card p-5">
+          <div key={r._id} className="card p-5">
             <div className="flex items-start justify-between mb-3">
               <div>
                 <p className="font-heading font-bold text-gray-800">{r.date}</p>
@@ -58,29 +71,25 @@ export default function ReservationsScreen() {
               <p>🏁 <span className="font-medium">To:</span> {r.destination}</p>
               <p>👤 <span className="font-medium">Rider:</span> {r.riderName}</p>
             </div>
-
             {tab === 'upcoming' && (
-              confirmingId === r.id ? (
+              confirmingId === r._id ? (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                   <p className="text-red-700 font-semibold text-sm mb-3">Cancel this reservation?</p>
                   <div className="flex gap-2">
-                    <button
-                      className="flex-1 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold text-sm"
-                      onClick={() => setConfirmingId(null)}>
-                      Keep It
-                    </button>
-                    <button
-                      className="flex-1 py-2 rounded-lg font-bold text-white text-sm"
+                    <button className="flex-1 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold text-sm"
+                      onClick={() => setConfirmingId(null)}>Keep It</button>
+                    <button className="flex-1 py-2 rounded-lg font-bold text-white text-sm"
                       style={{ background: '#DC2626' }}
+                      disabled={cancelling}
                       onClick={() => handleCancel(r)}>
-                      Yes, Cancel
+                      {cancelling ? 'Cancelling…' : 'Yes, Cancel'}
                     </button>
                   </div>
                 </div>
               ) : (
                 <button
                   className="w-full py-2.5 rounded-xl border-2 border-red-200 text-red-500 text-sm font-bold hover:bg-red-50 transition-colors"
-                  onClick={() => setConfirmingId(r.id)}>
+                  onClick={() => setConfirmingId(r._id)}>
                   Cancel Ride
                 </button>
               )

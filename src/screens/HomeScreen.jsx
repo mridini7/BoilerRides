@@ -5,13 +5,15 @@ function EditField({ label, value, onSave, validate, type = 'text' }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value)
   const [err, setErr] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const save = () => {
+  const save = async () => {
     const error = validate?.(val)
     if (error) return setErr(error)
-    onSave(val)
-    setEditing(false)
-    setErr('')
+    setSaving(true)
+    try { await onSave(val); setEditing(false); setErr('') }
+    catch (e) { setErr(e.message) }
+    finally { setSaving(false) }
   }
 
   return (
@@ -26,7 +28,7 @@ function EditField({ label, value, onSave, validate, type = 'text' }) {
         <div className="flex flex-col gap-2 mt-2">
           <input className="input-field text-sm" type={type} value={val} onChange={e => setVal(e.target.value)} />
           {err && <p className="text-red-500 text-xs">{err}</p>}
-          <button className="btn-gold" style={{ padding: '8px', fontSize: 13 }} onClick={save}>Save</button>
+          <button className="btn-gold" style={{ padding: '8px', fontSize: 13 }} disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</button>
         </div>
       ) : (
         <p className="font-medium text-gray-800">{type === 'password' ? '••••••••' : value}</p>
@@ -36,23 +38,8 @@ function EditField({ label, value, onSave, validate, type = 'text' }) {
 }
 
 function SettingsModal({ onClose }) {
-  const { user, login, logout, deleteAccount } = useApp()
+  const { user, updateUser, logout, deleteAccount } = useApp()
   const [confirmDelete, setConfirmDelete] = useState(false)
-
-  const updateUser = (field, value) => {
-    const users = JSON.parse(localStorage.getItem('br_users') || '{}')
-    const updated = { ...user, [field]: value }
-    // if email changed, migrate the key
-    if (field === 'email') {
-      delete users[user.email]
-      users[value] = updated
-      localStorage.removeItem(`br_reservations_${user.email}`)
-    } else {
-      users[updated.email] = updated
-    }
-    localStorage.setItem('br_users', JSON.stringify(users))
-    login(updated)
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
@@ -76,7 +63,7 @@ function SettingsModal({ onClose }) {
           />
           <EditField
             label="Password"
-            value={user?.password}
+            value="placeholder"
             type="password"
             validate={v => v.length < 6 ? 'Min 6 characters' : ''}
             onSave={v => updateUser('password', v)}

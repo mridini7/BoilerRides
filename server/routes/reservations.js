@@ -1,0 +1,67 @@
+import { Router } from 'express'
+import auth from '../middleware/auth.js'
+import Reservation from '../models/Reservation.js'
+import Ride from '../models/Ride.js'
+
+const router = Router()
+
+// Store human-readable labels in the reservation, not IDs
+router.post('/', auth, async (req, res) => {
+  try {
+    const { rideId, riderName, mobility, confirmationNumber, pickupLabel, destinationLabel } = req.body
+    const userId = req.user.userId
+
+    const ride = await Ride.findOneAndUpdate(
+      { _id: rideId, $expr: { $lt: ['$seatsBooked', '$totalSeats'] } },
+      { $inc: { seatsBooked: 1 } },
+      { new: true }
+    )
+    if (!ride) return res.status(409).json({ error: 'No seats available on this ride.' })
+
+    const reservation = await Reservation.create({
+      userId, rideId: ride._id, confirmationNumber,
+      date: ride.date,
+      pickup: pickupLabel || ride.pickup,
+      destination: destinationLabel || ride.destination,
+      departureTime: ride.departureTime, arrivalTime: ride.arrivalTime,
+      riderName, mobility,
+    })
+    res.status(201).json(reservation)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// GET /api/reservations/:userId
+router.get('/:userId', auth, async (req, res) => {
+  try {
+    if (req.user.userId !== req.params.userId)
+      return res.status(403).json({ error: 'Forbidden' })
+    const reservations = await Reservation.find({ userId: req.params.userId })
+      .sort({ date: -1, departureTime: 1 })
+    res.json(reservations)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// DELETE /api/reservations/:reservationId — cancel a single reservation
+router.delete('/:reservationId', auth, async (req, res) => {
+  try {
+    const reservation = await Reservation.findById(req.params.reservationId)
+    if (!reservation) return res.status(404).json({ error: 'Reservation not found.' })
+    if (reservation.userId.toString() !== req.user.userId)
+      return res.status(403).json({ error: 'Forbidden' })
+
+    // restore the seat atomically, never go below 0
+    await Ride.findByIdAndUpdate(reservation.rideId, [
+      { $set: { seatsBooked: { $max: [0, { $subtract: ['$seatsBooked', 1] }] } } }
+    ])
+    await reservation.deleteOne()
+    res.json({ message: 'Reservation cancelled.' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+export default router
