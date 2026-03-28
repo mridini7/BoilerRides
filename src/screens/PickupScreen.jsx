@@ -16,7 +16,6 @@ const SPOTS = [
   { id: 8,  name: 'Indiana University Bloomington',           lat: 39.1653, lng: -86.5264, desc: 'Bloomington, IN — Sample Gates pickup' },
   { id: 9,  name: 'Ohio State University',                    lat: 40.0076, lng: -83.0300, desc: 'Columbus, OH — Oval area pickup' },
   { id: 10, name: 'University of Notre Dame',                 lat: 41.7052, lng: -86.2350, desc: 'Notre Dame, IN — Main gate pickup' },
-  { id: 11, name: 'Michigan State University',                lat: 42.7018, lng: -84.4822, desc: 'East Lansing, MI — Union pickup' },
 ]
 
 function deg2rad(d) { return d * Math.PI / 180 }

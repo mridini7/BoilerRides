@@ -16,7 +16,6 @@ const LOCATIONS = [
   { id: 'iu',    label: 'Indiana University Bloomington', sub: null },
   { id: 'osu',   label: 'Ohio State University',          sub: null },
   { id: 'nd',    label: 'University of Notre Dame',       sub: null },
-  { id: 'msu',   label: 'Michigan State University',      sub: null },
 ]
 
 const LOCATION_MAPS = {
@@ -30,11 +29,10 @@ const LOCATION_MAPS = {
   iu:    'https://www.openstreetmap.org/export/embed.html?bbox=-86.5466%2C39.1466%2C-86.4866%2C39.1866&layer=mapnik&marker=39.1653%2C-86.5264',
   osu:   'https://www.openstreetmap.org/export/embed.html?bbox=-83.0760%2C39.9760%2C-83.0160%2C40.0160&layer=mapnik&marker=40.0076%2C-83.0300',
   nd:    'https://www.openstreetmap.org/export/embed.html?bbox=-86.2574%2C41.6874%2C-86.1974%2C41.7274&layer=mapnik&marker=41.7052%2C-86.2350',
-  msu:   'https://www.openstreetmap.org/export/embed.html?bbox=-84.5074%2C42.6974%2C-84.4474%2C42.7374&layer=mapnik&marker=42.7018%2C-84.4822',
 }
 
 const AIRPORT_IDS = ['ord', 'ind']
-const COLLEGE_IDS = ['uiuc', 'umich', 'iu', 'osu', 'nd', 'msu']
+const COLLEGE_IDS = ['uiuc', 'umich', 'iu', 'osu', 'nd']
 
 function isPaidRoute(pickup, dest) {
   return AIRPORT_IDS.includes(pickup) || AIRPORT_IDS.includes(dest) ||
