@@ -2,22 +2,65 @@ import 'dotenv/config'
 import mongoose from 'mongoose'
 import Ride from './models/Ride.js'
 
+// Drive durations in minutes (symmetric)
 const DURATIONS = {
-  'pmu-corec': 5,   'corec-pmu': 5,
-  'pmu-pui':   90,  'pui-pmu':   90,
-  'pmu-ind':   105, 'ind-pmu':   105,
-  'pmu-ord':   135, 'ord-pmu':   135,
-  'corec-pui': 90,  'pui-corec': 90,
-  'corec-ind': 105, 'ind-corec': 105,
-  'corec-ord': 135, 'ord-corec': 135,
-  'pui-ind':   25,  'ind-pui':   25,
-  'pui-ord':   165, 'ord-pui':   165,
-  'ind-ord':   185, 'ord-ind':   185,
+  // ── Existing Purdue campus ──────────────────────────────────────────────
+  'pmu-corec': 5,    'corec-pmu': 5,
+  'pmu-pui':   90,   'pui-pmu':   90,
+  'pmu-ind':   105,  'ind-pmu':   105,
+  'pmu-ord':   135,  'ord-pmu':   135,
+  'corec-pui': 90,   'pui-corec': 90,
+  'corec-ind': 105,  'ind-corec': 105,
+  'corec-ord': 135,  'ord-corec': 135,
+  'pui-ind':   25,   'ind-pui':   25,
+  'pui-ord':   165,  'ord-pui':   165,
+  'ind-ord':   185,  'ord-ind':   185,
+
+  // ── PMU ↔ Inter-college ─────────────────────────────────────────────────
+  'pmu-uiuc':  120,  'uiuc-pmu':  120,  // ~2h
+  'pmu-umich': 195,  'umich-pmu': 195,  // ~3h 15m
+  'pmu-iu':    75,   'iu-pmu':    75,   // ~1h 15m
+  'pmu-osu':   270,  'osu-pmu':   270,  // ~4h 30m
+  'pmu-nd':    90,   'nd-pmu':    90,   // ~1h 30m
+  'pmu-msu':   225,  'msu-pmu':   225,  // ~3h 45m
+
+  // ── Co-Rec ↔ Inter-college ──────────────────────────────────────────────
+  'corec-uiuc':  120, 'uiuc-corec':  120,
+  'corec-umich': 195, 'umich-corec': 195,
+  'corec-iu':    75,  'iu-corec':    75,
+  'corec-osu':   270, 'osu-corec':   270,
+  'corec-nd':    90,  'nd-corec':    90,
+  'corec-msu':   225, 'msu-corec':   225,
+
+  // ── Purdue Indy ↔ Inter-college ─────────────────────────────────────────
+  'pui-uiuc':  165,  'uiuc-pui':  165,  // ~2h 45m
+  'pui-umich': 240,  'umich-pui': 240,  // ~4h
+  'pui-iu':    60,   'iu-pui':    60,   // ~1h
+  'pui-osu':   285,  'osu-pui':   285,  // ~4h 45m
+  'pui-nd':    135,  'nd-pui':    135,  // ~2h 15m
+  'pui-msu':   270,  'msu-pui':   270,  // ~4h 30m
+
+  // ── Inter-college ↔ Inter-college ───────────────────────────────────────
+  'uiuc-iu':   135,  'iu-uiuc':   135,  // ~2h 15m
+  'uiuc-nd':   150,  'nd-uiuc':   150,  // ~2h 30m
+  'uiuc-umich':270,  'umich-uiuc':270,  // ~4h 30m
+  'uiuc-osu':  300,  'osu-uiuc':  300,  // ~5h
+  'uiuc-msu':  315,  'msu-uiuc':  315,  // ~5h 15m
+  'iu-nd':     150,  'nd-iu':     150,  // ~2h 30m
+  'iu-umich':  285,  'umich-iu':  285,  // ~4h 45m
+  'iu-osu':    225,  'osu-iu':    225,  // ~3h 45m
+  'iu-msu':    315,  'msu-iu':    315,  // ~5h 15m
+  'nd-umich':  225,  'umich-nd':  225,  // ~3h 45m
+  'nd-osu':    285,  'osu-nd':    285,  // ~4h 45m
+  'nd-msu':    195,  'msu-nd':    195,  // ~3h 15m
+  'umich-osu': 195,  'osu-umich': 195,  // ~3h 15m
+  'umich-msu': 75,   'msu-umich': 75,   // ~1h 15m
+  'osu-msu':   255,  'msu-osu':   255,  // ~4h 15m
 }
 
-// Prices in USD — 0 means free (campus-only routes)
-// Airport routes (involving ord or ind) require payment
+// Prices in USD — based on distance/duration
 const PRICES = {
+  // ── Existing ────────────────────────────────────────────────────────────
   'pmu-corec': 0,   'corec-pmu': 0,
   'pmu-pui':   0,   'pui-pmu':   0,
   'pmu-ind':   25,  'ind-pmu':   25,
@@ -28,6 +71,47 @@ const PRICES = {
   'pui-ind':   15,  'ind-pui':   15,
   'pui-ord':   40,  'ord-pui':   40,
   'ind-ord':   35,  'ord-ind':   35,
+
+  // ── PMU ↔ Inter-college ─────────────────────────────────────────────────
+  'pmu-uiuc':  20,  'uiuc-pmu':  20,
+  'pmu-umich': 35,  'umich-pmu': 35,
+  'pmu-iu':    15,  'iu-pmu':    15,
+  'pmu-osu':   50,  'osu-pmu':   50,
+  'pmu-nd':    20,  'nd-pmu':    20,
+  'pmu-msu':   40,  'msu-pmu':   40,
+
+  // ── Co-Rec ↔ Inter-college ──────────────────────────────────────────────
+  'corec-uiuc':  20, 'uiuc-corec':  20,
+  'corec-umich': 35, 'umich-corec': 35,
+  'corec-iu':    15, 'iu-corec':    15,
+  'corec-osu':   50, 'osu-corec':   50,
+  'corec-nd':    20, 'nd-corec':    20,
+  'corec-msu':   40, 'msu-corec':   40,
+
+  // ── Purdue Indy ↔ Inter-college ─────────────────────────────────────────
+  'pui-uiuc':  30,  'uiuc-pui':  30,
+  'pui-umich': 45,  'umich-pui': 45,
+  'pui-iu':    10,  'iu-pui':    10,
+  'pui-osu':   55,  'osu-pui':   55,
+  'pui-nd':    25,  'nd-pui':    25,
+  'pui-msu':   50,  'msu-pui':   50,
+
+  // ── Inter-college ↔ Inter-college ───────────────────────────────────────
+  'uiuc-iu':   25,  'iu-uiuc':   25,
+  'uiuc-nd':   25,  'nd-uiuc':   25,
+  'uiuc-umich':50,  'umich-uiuc':50,
+  'uiuc-osu':  55,  'osu-uiuc':  55,
+  'uiuc-msu':  55,  'msu-uiuc':  55,
+  'iu-nd':     25,  'nd-iu':     25,
+  'iu-umich':  50,  'umich-iu':  50,
+  'iu-osu':    40,  'osu-iu':    40,
+  'iu-msu':    55,  'msu-iu':    55,
+  'nd-umich':  40,  'umich-nd':  40,
+  'nd-osu':    50,  'osu-nd':    50,
+  'nd-msu':    35,  'msu-nd':    35,
+  'umich-osu': 35,  'osu-umich': 35,
+  'umich-msu': 15,  'msu-umich': 15,
+  'osu-msu':   45,  'msu-osu':   45,
 }
 
 function addMinutes(timeStr, mins) {
@@ -62,6 +146,7 @@ const DEPARTURES = ['6:00 AM', '8:30 AM', '11:00 AM', '1:30 PM', '4:00 PM', '6:3
 const BASE_BOOKED = [2, 4, 0, 1, 7, 3]
 
 const ROUTES = [
+  // ── Existing ──────────────────────────────────────────────────────────
   ['pmu', 'pui'], ['pui', 'pmu'],
   ['pmu', 'ind'], ['ind', 'pmu'],
   ['pmu', 'ord'], ['ord', 'pmu'],
@@ -70,6 +155,47 @@ const ROUTES = [
   ['pui', 'ind'], ['ind', 'pui'],
   ['pui', 'ord'], ['ord', 'pui'],
   ['ind', 'ord'], ['ord', 'ind'],
+
+  // ── PMU ↔ Inter-college ───────────────────────────────────────────────
+  ['pmu', 'uiuc'], ['uiuc', 'pmu'],
+  ['pmu', 'umich'], ['umich', 'pmu'],
+  ['pmu', 'iu'], ['iu', 'pmu'],
+  ['pmu', 'osu'], ['osu', 'pmu'],
+  ['pmu', 'nd'], ['nd', 'pmu'],
+  ['pmu', 'msu'], ['msu', 'pmu'],
+
+  // ── Co-Rec ↔ Inter-college ────────────────────────────────────────────
+  ['corec', 'uiuc'], ['uiuc', 'corec'],
+  ['corec', 'umich'], ['umich', 'corec'],
+  ['corec', 'iu'], ['iu', 'corec'],
+  ['corec', 'osu'], ['osu', 'corec'],
+  ['corec', 'nd'], ['nd', 'corec'],
+  ['corec', 'msu'], ['msu', 'corec'],
+
+  // ── Purdue Indy ↔ Inter-college ───────────────────────────────────────
+  ['pui', 'uiuc'], ['uiuc', 'pui'],
+  ['pui', 'umich'], ['umich', 'pui'],
+  ['pui', 'iu'], ['iu', 'pui'],
+  ['pui', 'osu'], ['osu', 'pui'],
+  ['pui', 'nd'], ['nd', 'pui'],
+  ['pui', 'msu'], ['msu', 'pui'],
+
+  // ── Inter-college ↔ Inter-college ─────────────────────────────────────
+  ['uiuc', 'iu'], ['iu', 'uiuc'],
+  ['uiuc', 'nd'], ['nd', 'uiuc'],
+  ['uiuc', 'umich'], ['umich', 'uiuc'],
+  ['uiuc', 'osu'], ['osu', 'uiuc'],
+  ['uiuc', 'msu'], ['msu', 'uiuc'],
+  ['iu', 'nd'], ['nd', 'iu'],
+  ['iu', 'umich'], ['umich', 'iu'],
+  ['iu', 'osu'], ['osu', 'iu'],
+  ['iu', 'msu'], ['msu', 'iu'],
+  ['nd', 'umich'], ['umich', 'nd'],
+  ['nd', 'osu'], ['osu', 'nd'],
+  ['nd', 'msu'], ['msu', 'nd'],
+  ['umich', 'osu'], ['osu', 'umich'],
+  ['umich', 'msu'], ['msu', 'umich'],
+  ['osu', 'msu'], ['msu', 'osu'],
 ]
 
 async function seed() {
@@ -82,8 +208,9 @@ async function seed() {
   for (let day = 1; day <= 14; day++) {
     const date = getDateStr(day)
     for (const [pickup, destination] of ROUTES) {
-      const duration = DURATIONS[`${pickup}-${destination}`] || 60
-      const price = PRICES[`${pickup}-${destination}`] ?? 0
+      const key = `${pickup}-${destination}`
+      const duration = DURATIONS[key] || 60
+      const price = PRICES[key] ?? 0
       DEPARTURES.forEach((dep, i) => {
         rides.push({
           date, pickup, destination,

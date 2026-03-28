@@ -3,25 +3,42 @@ import { useApp } from '../context/AppContext'
 import confetti from 'canvas-confetti'
 
 const LOCATIONS = [
-  { id: 'pui',   label: 'Purdue Indianapolis',            sub: null },
+  // ── Purdue campuses ──────────────────────────────────────────────────────
   { id: 'pmu',   label: 'Purdue West Lafayette — PMU',    sub: null },
   { id: 'corec', label: 'Purdue West Lafayette — Co-Rec', sub: null },
-  { id: 'ord',   label: "Chicago O'Hare",                 sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
+  { id: 'pui',   label: 'Purdue Indianapolis',            sub: null },
+  // ── Airports ─────────────────────────────────────────────────────────────
+  { id: 'ord',   label: "Chicago O'Hare (ORD)",           sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
   { id: 'ind',   label: 'Indianapolis IND',               sub: ['Terminal A', 'Terminal B'] },
+  // ── Inter-college ─────────────────────────────────────────────────────────
+  { id: 'uiuc',  label: 'Univ. of Illinois Urbana-Champaign', sub: null },
+  { id: 'umich', label: 'University of Michigan',         sub: null },
+  { id: 'iu',    label: 'Indiana University Bloomington', sub: null },
+  { id: 'osu',   label: 'Ohio State University',          sub: null },
+  { id: 'nd',    label: 'University of Notre Dame',       sub: null },
+  { id: 'msu',   label: 'Michigan State University',      sub: null },
 ]
 
 const LOCATION_MAPS = {
-  pui:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.1946%2C39.7671%2C-86.1546%2C39.7871&layer=mapnik&marker=39.7771%2C-86.1746',
   pmu:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.9281%2C40.4159%2C-86.8881%2C40.4359&layer=mapnik&marker=40.4259%2C-86.9081',
   corec: 'https://www.openstreetmap.org/export/embed.html?bbox=-86.9367%2C40.4174%2C-86.8967%2C40.4374&layer=mapnik&marker=40.4274%2C-86.9167',
+  pui:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.1946%2C39.7671%2C-86.1546%2C39.7871&layer=mapnik&marker=39.7771%2C-86.1746',
   ord:   'https://www.openstreetmap.org/export/embed.html?bbox=-87.9466%2C41.9666%2C-87.8866%2C42.0066&layer=mapnik&marker=41.9742%2C-87.9073',
   ind:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.3041%2C39.7117%2C-86.2441%2C39.7517&layer=mapnik&marker=39.7173%2C-86.2944',
+  uiuc:  'https://www.openstreetmap.org/export/embed.html?bbox=-88.2474%2C40.0814%2C-88.1874%2C40.1214&layer=mapnik&marker=40.1020%2C-88.2272',
+  umich: 'https://www.openstreetmap.org/export/embed.html?bbox=-83.7560%2C42.2560%2C-83.6960%2C42.2960&layer=mapnik&marker=42.2780%2C-83.7382',
+  iu:    'https://www.openstreetmap.org/export/embed.html?bbox=-86.5466%2C39.1466%2C-86.4866%2C39.1866&layer=mapnik&marker=39.1653%2C-86.5264',
+  osu:   'https://www.openstreetmap.org/export/embed.html?bbox=-83.0760%2C39.9760%2C-83.0160%2C40.0160&layer=mapnik&marker=40.0076%2C-83.0300',
+  nd:    'https://www.openstreetmap.org/export/embed.html?bbox=-86.2574%2C41.6874%2C-86.1974%2C41.7274&layer=mapnik&marker=41.7052%2C-86.2350',
+  msu:   'https://www.openstreetmap.org/export/embed.html?bbox=-84.5074%2C42.6974%2C-84.4474%2C42.7374&layer=mapnik&marker=42.7018%2C-84.4822',
 }
 
 const AIRPORT_IDS = ['ord', 'ind']
+const COLLEGE_IDS = ['uiuc', 'umich', 'iu', 'osu', 'nd', 'msu']
 
 function isPaidRoute(pickup, dest) {
-  return AIRPORT_IDS.includes(pickup) || AIRPORT_IDS.includes(dest)
+  return AIRPORT_IDS.includes(pickup) || AIRPORT_IDS.includes(dest) ||
+         COLLEGE_IDS.includes(pickup) || COLLEGE_IDS.includes(dest)
 }
 
 function seatBadge(available, total) {
