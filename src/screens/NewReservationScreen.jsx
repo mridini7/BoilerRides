@@ -4,12 +4,12 @@ import confetti from 'canvas-confetti'
 
 const LOCATIONS = [
   // ── Airports (top) ──────────────────────────────────────────────────────
-  { id: 'ind',   label: 'Indianapolis IND',                   sub: ['Terminal A', 'Terminal B'] },
-  { id: 'ord',   label: "Chicago O'Hare (ORD)",               sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
+  { id: 'ind',   label: 'Indianapolis Airport (IND)',           sub: ['Terminal A', 'Terminal B'] },
+  { id: 'ord',   label: "Chicago O'Hare Airport (ORD)",         sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
   // ── Purdue campuses (alphabetical) ─────────────────────────────────────────────────────
   { id: 'corec', label: 'Purdue Co-Rec / WALC Area',          sub: null },
-  { id: 'pui',   label: 'Purdue Indianapolis',                sub: null },
   { id: 'pmu',   label: 'Purdue West Lafayette — PMU',        sub: null },
+  { id: 'pui',   label: 'Purdue Indianapolis',                sub: null },
   // ── Colleges (alphabetical) ────────────────────────────────────────────────────────────────
   { id: 'iu',    label: 'Indiana University Bloomington',     sub: null },
   { id: 'osu',   label: 'Ohio State University',              sub: null },
@@ -33,6 +33,20 @@ const LOCATION_MAPS = {
 
 const AIRPORT_IDS = ['ord', 'ind']
 const COLLEGE_IDS = ['uiuc', 'umich', 'iu', 'osu', 'nd']
+
+// Valid destinations for each pickup — mirrors seed.js ROUTES exactly
+const CONNECTIONS = {
+  pmu:   ['corec', 'pui', 'ind', 'ord', 'uiuc', 'umich', 'iu', 'osu', 'nd'],
+  corec: ['pmu', 'pui', 'ind', 'ord', 'uiuc', 'umich', 'iu', 'osu', 'nd'],
+  pui:   ['pmu', 'corec', 'ind', 'uiuc', 'umich', 'iu', 'osu', 'nd'],
+  ind:   ['pmu', 'corec', 'pui', 'ord'],
+  ord:   ['pmu', 'corec', 'uiuc', 'ind'],
+  uiuc:  ['pmu', 'corec', 'pui', 'ord', 'iu', 'nd', 'umich', 'osu'],
+  umich: ['pmu', 'corec', 'pui', 'uiuc', 'iu', 'nd', 'osu'],
+  iu:    ['pmu', 'corec', 'pui', 'uiuc', 'umich', 'nd', 'osu'],
+  osu:   ['pmu', 'corec', 'pui', 'uiuc', 'umich', 'iu', 'nd'],
+  nd:    ['pmu', 'corec', 'pui', 'uiuc', 'umich', 'iu', 'osu'],
+}
 
 function isPaidRoute(pickup, dest) {
   return AIRPORT_IDS.includes(pickup) || AIRPORT_IDS.includes(dest) ||
@@ -101,14 +115,15 @@ function Calendar({ selected, onSelect }) {
 
 // ─── Location Selector ────────────────────────────────────────────────────────
 
-function LocationSelect({ value, subValue, onChange, onSubChange, exclude, label }) {
+function LocationSelect({ value, subValue, onChange, onSubChange, exclude, allowedIds, label }) {
   const [expanded, setExpanded] = useState(null)
   return (
     <div className="flex flex-col gap-2">
       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</label>
       <div className="flex flex-col gap-2">
         {LOCATIONS.map(l => {
-          const disabled = l.id === exclude, sel = value === l.id, showMap = expanded === l.id || sel
+          const disabled = l.id === exclude || (allowedIds && !allowedIds.includes(l.id))
+          const sel = value === l.id, showMap = expanded === l.id || sel
           return (
             <div key={l.id}>
               <button disabled={disabled}
@@ -309,7 +324,7 @@ export default function NewReservationScreen() {
           <>
             <p className="text-gray-300 text-sm">Where are you headed?</p>
             <div className="card p-4">
-              <LocationSelect value={dest} subValue={destSub} onChange={setDest} onSubChange={setDestSub} exclude={pickup} label="Destination" />
+              <LocationSelect value={dest} subValue={destSub} onChange={setDest} onSubChange={setDestSub} exclude={pickup} allowedIds={pickup ? CONNECTIONS[pickup] : null} label="Destination" />
             </div>
             {dest && dest === pickup && <p className="text-red-400 text-sm font-medium">Pickup and destination cannot be the same.</p>}
             {ridesError && <p className="text-red-400 text-sm font-medium">{ridesError}</p>}

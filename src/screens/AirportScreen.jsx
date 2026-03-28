@@ -2,12 +2,12 @@ import { useState } from 'react'
 
 const AIRPORTS = [
   {
-    code: 'IND', name: 'Indianapolis Airport', icon: '✈️',
+    code: 'IND', name: 'Indianapolis Airport (IND)', icon: '✈️',
     address: '7800 Col. H. Weir Cook Memorial Dr, Indianapolis, IN 46241',
     terminals: ['Terminal A', 'Terminal B'],
   },
   {
-    code: 'ORD', name: "Chicago O'Hare", icon: '🛫',
+    code: 'ORD', name: "Chicago O'Hare Airport (ORD)", icon: '🛫',
     address: '10000 W O\'Hare Ave, Chicago, IL 60666',
     terminals: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'],
   },
