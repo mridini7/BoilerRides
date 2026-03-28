@@ -15,6 +15,21 @@ const DURATIONS = {
   'ind-ord':   185, 'ord-ind':   185,
 }
 
+// Prices in USD — 0 means free (campus-only routes)
+// Airport routes (involving ord or ind) require payment
+const PRICES = {
+  'pmu-corec': 0,   'corec-pmu': 0,
+  'pmu-pui':   0,   'pui-pmu':   0,
+  'pmu-ind':   25,  'ind-pmu':   25,
+  'pmu-ord':   45,  'ord-pmu':   45,
+  'corec-pui': 0,   'pui-corec': 0,
+  'corec-ind': 25,  'ind-corec': 25,
+  'corec-ord': 45,  'ord-corec': 45,
+  'pui-ind':   15,  'ind-pui':   15,
+  'pui-ord':   40,  'ord-pui':   40,
+  'ind-ord':   35,  'ord-ind':   35,
+}
+
 function addMinutes(timeStr, mins) {
   const [time, ampm] = timeStr.split(' ')
   let [h, m] = time.split(':').map(Number)
@@ -27,6 +42,14 @@ function addMinutes(timeStr, mins) {
   if (rh > 12) rh -= 12
   if (rh === 0) rh = 12
   return `${rh}:${String(rm).padStart(2, '0')} ${rap}`
+}
+
+function toMinutes(timeStr) {
+  const [time, ampm] = timeStr.split(' ')
+  let [h, m] = time.split(':').map(Number)
+  if (ampm === 'PM' && h !== 12) h += 12
+  if (ampm === 'AM' && h === 12) h = 0
+  return h * 60 + m
 }
 
 function getDateStr(daysFromNow) {
@@ -60,13 +83,16 @@ async function seed() {
     const date = getDateStr(day)
     for (const [pickup, destination] of ROUTES) {
       const duration = DURATIONS[`${pickup}-${destination}`] || 60
+      const price = PRICES[`${pickup}-${destination}`] ?? 0
       DEPARTURES.forEach((dep, i) => {
         rides.push({
           date, pickup, destination,
           departureTime: dep,
           arrivalTime: addMinutes(dep, duration),
+          departureMinutes: toMinutes(dep),
           totalSeats: 12,
           seatsBooked: BASE_BOOKED[i % BASE_BOOKED.length],
+          price,
         })
       })
     }

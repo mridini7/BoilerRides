@@ -25,6 +25,7 @@ router.post('/', auth, async (req, res) => {
       destination: destinationLabel || ride.destination,
       departureTime: ride.departureTime, arrivalTime: ride.arrivalTime,
       riderName, mobility,
+      price: ride.price ?? 0,
     })
     res.status(201).json(reservation)
   } catch (err) {
@@ -37,9 +38,30 @@ router.get('/:userId', auth, async (req, res) => {
   try {
     if (req.user.userId !== req.params.userId)
       return res.status(403).json({ error: 'Forbidden' })
+
     const reservations = await Reservation.find({ userId: req.params.userId })
       .sort({ date: -1, departureTime: 1 })
-    res.json(reservations)
+      .lean()
+
+    // For any reservation missing a price, look it up from the ride
+    const rideIds = reservations
+      .filter(r => r.price === undefined || r.price === null)
+      .map(r => r.rideId)
+
+    let ridePriceMap = {}
+    if (rideIds.length > 0) {
+      const rides = await Ride.find({ _id: { $in: rideIds } }).lean()
+      rides.forEach(ride => { ridePriceMap[ride._id.toString()] = ride.price ?? 0 })
+    }
+
+    const result = reservations.map(r => ({
+      ...r,
+      price: (r.price !== undefined && r.price !== null)
+        ? r.price
+        : (ridePriceMap[r.rideId?.toString()] ?? 0)
+    }))
+
+    res.json(result)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
@@ -54,9 +76,11 @@ router.delete('/:reservationId', auth, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' })
 
     // restore the seat atomically, never go below 0
-    await Ride.findByIdAndUpdate(reservation.rideId, [
-      { $set: { seatsBooked: { $max: [0, { $subtract: ['$seatsBooked', 1] }] } } }
-    ])
+    await Ride.findByIdAndUpdate(
+      reservation.rideId,
+      [{ $set: { seatsBooked: { $max: [0, { $subtract: ['$seatsBooked', 1] }] } } }],
+      { updatePipeline: true }
+    )
     await reservation.deleteOne()
     res.json({ message: 'Reservation cancelled.' })
   } catch (err) {

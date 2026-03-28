@@ -11,6 +11,7 @@ const reservationSchema = new mongoose.Schema({
   arrivalTime:        { type: String, required: true },
   riderName:          { type: String, required: true },
   mobility:           { type: String, default: 'None' },
+  price:              { type: Number },
 }, { timestamps: true })
 
 export default mongoose.model('Reservation', reservationSchema)

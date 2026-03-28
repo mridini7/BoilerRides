@@ -2,6 +2,7 @@ import { useApp } from './context/AppContext'
 import AuthScreen from './screens/AuthScreen'
 import HomeScreen from './screens/HomeScreen'
 import ReservationsScreen from './screens/ReservationsScreen'
+import RideHistoryScreen from './screens/RideHistoryScreen'
 import AirportScreen from './screens/AirportScreen'
 import PickupScreen from './screens/PickupScreen'
 import ReportScreen from './screens/ReportScreen'
@@ -11,6 +12,7 @@ import TabBar from './components/TabBar'
 const SCREEN_MAP = {
   home: HomeScreen,
   reservations: ReservationsScreen,
+  'ride-history': RideHistoryScreen,
   airport: AirportScreen,
   pickup: PickupScreen,
   report: ReportScreen,

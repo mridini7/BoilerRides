@@ -96,7 +96,7 @@ function SettingsModal({ onClose }) {
 }
 
 const CARDS = [
-  { id: 'reservations', label: 'My Reservations', icon: '📅', screen: 'reservations' },
+  { id: 'ride-history', label: 'Ride History', icon: '🕐', screen: 'ride-history' },
   { id: 'airport', label: 'Airport Info', icon: '✈️', screen: 'airport' },
   { id: 'pickup', label: 'Campus Pick Up Spots', icon: '📍', screen: 'pickup' },
   { id: 'report', label: 'Report an Issue', icon: '🚩', screen: 'report' },

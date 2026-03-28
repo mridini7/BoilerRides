@@ -18,6 +18,12 @@ const LOCATION_MAPS = {
   ind:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.3041%2C39.7117%2C-86.2441%2C39.7517&layer=mapnik&marker=39.7173%2C-86.2944',
 }
 
+const AIRPORT_IDS = ['ord', 'ind']
+
+function isPaidRoute(pickup, dest) {
+  return AIRPORT_IDS.includes(pickup) || AIRPORT_IDS.includes(dest)
+}
+
 function seatBadge(available, total) {
   const t = total || 12
   if (available / t > 0.5) return { label: `${available} of ${t} seats open`, cls: 'bg-green-100 text-green-700' }
@@ -26,6 +32,10 @@ function seatBadge(available, total) {
 }
 
 function genConfirmNum() { return Math.random().toString(36).slice(2, 8).toUpperCase() }
+
+function formatPrice(price) {
+  return price > 0 ? `$${price.toFixed(2)}` : 'Free'
+}
 
 // ─── Calendar ─────────────────────────────────────────────────────────────────
 
@@ -135,6 +145,7 @@ export default function NewReservationScreen() {
   const [selectedRide, setSelectedRide] = useState(null)
   const [riderName, setRiderName] = useState(user?.name || '')
   const [mobility, setMobility] = useState('None')
+  const [payment, setPayment] = useState({ cardNumber: '', expiry: '', cvv: '', name: '' })
   const [confirmed, setConfirmed] = useState(null)
   const [bookingError, setBookingError] = useState('')
   const confettiRef = useRef(false)
@@ -146,6 +157,15 @@ export default function NewReservationScreen() {
 
   const pickupValid = pickup && (!LOCATIONS.find(x => x.id === pickup)?.sub || pickupSub)
   const destValid   = dest   && (!LOCATIONS.find(x => x.id === dest)?.sub   || destSub)
+  const paid = isPaidRoute(pickup, dest)
+  const price = selectedRide?.price ?? 0
+
+  const paymentValid = !paid || (
+    payment.cardNumber.replace(/\s/g, '').length === 16 &&
+    payment.expiry.length === 5 &&
+    payment.cvv.length >= 3 &&
+    payment.name.trim().length > 0
+  )
 
   const handleFindRides = async () => {
     setRidesError('')
@@ -173,7 +193,7 @@ export default function NewReservationScreen() {
         pickupLabel: locLabel(pickup, pickupSub),
         destinationLabel: locLabel(dest, destSub),
       })
-      setConfirmed({ ...res, confirmationNumber })
+      setConfirmed({ ...res, confirmationNumber, price })
       setStep(6)
     } catch (e) {
       setBookingError(e.message)
@@ -189,6 +209,7 @@ export default function NewReservationScreen() {
 
   const STEPS = ['Date', 'Pickup', 'Destination', 'Rides', 'Info', 'Done']
 
+  // ── Step 6: Confirmation ──────────────────────────────────────────────────
   if (step === 6 && confirmed) {
     return (
       <div className="screen-enter flex flex-col flex-1 items-center justify-center px-5 py-10 text-center gap-6">
@@ -205,6 +226,20 @@ export default function NewReservationScreen() {
           <p className="text-sm text-gray-600">📍 {confirmed.pickup}</p>
           <p className="text-sm text-gray-600">🏁 {confirmed.destination}</p>
           <p className="text-sm text-gray-600">👤 {confirmed.riderName}</p>
+          {confirmed.price > 0 && (
+            <>
+              <div className="h-px bg-gray-100" />
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-600">💳 Ticket Price</p>
+                <p className="font-heading font-bold text-gray-800">${confirmed.price.toFixed(2)}</p>
+              </div>
+              <div className="flex justify-between items-center bg-gold/10 rounded-xl px-3 py-2">
+                <p className="font-heading font-bold text-gray-800">Total Charged</p>
+                <p className="font-heading font-black text-lg text-gray-900">${confirmed.price.toFixed(2)}</p>
+              </div>
+              <p className="text-xs text-gray-400">Card ending in {payment.cardNumber.slice(-4)}</p>
+            </>
+          )}
         </div>
         <p className="text-sm text-gray-400">A confirmation email has been sent to <strong className="text-gray-300">{user?.email}</strong>. Show this at your pick-up spot.</p>
         <button className="btn-gold" onClick={() => setScreen('reservations')}>View My Reservations</button>
@@ -212,6 +247,7 @@ export default function NewReservationScreen() {
     )
   }
 
+  // ── Steps 1–5 ─────────────────────────────────────────────────────────────
   return (
     <div className="screen-enter flex flex-col flex-1 pb-24">
       <div className="px-5 pt-10 pb-4 flex items-center gap-3">
@@ -233,6 +269,8 @@ export default function NewReservationScreen() {
       </div>
 
       <div className="px-5 flex flex-col gap-5">
+
+        {/* Step 1 — Date */}
         {step === 1 && (
           <>
             <p className="text-gray-300 text-sm">Select your travel date</p>
@@ -240,6 +278,7 @@ export default function NewReservationScreen() {
           </>
         )}
 
+        {/* Step 2 — Pickup */}
         {step === 2 && (
           <>
             <p className="text-gray-300 text-sm">Where are you departing from?</p>
@@ -250,6 +289,7 @@ export default function NewReservationScreen() {
           </>
         )}
 
+        {/* Step 3 — Destination */}
         {step === 3 && (
           <>
             <p className="text-gray-300 text-sm">Where are you headed?</p>
@@ -264,9 +304,16 @@ export default function NewReservationScreen() {
           </>
         )}
 
+        {/* Step 4 — Rides */}
         {step === 4 && (
           <>
             <p className="text-gray-300 text-sm">Available rides on <strong className="text-white">{date}</strong></p>
+            {paid && (
+              <div className="flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-xl px-4 py-3">
+                <span className="text-lg">💳</span>
+                <p className="text-sm text-yellow-900 font-semibold">This is a paid route. Ticket prices shown per seat.</p>
+              </div>
+            )}
             {rides.length === 0 ? (
               <div className="card p-6 text-center">
                 <p className="text-gray-500">No rides available for this route and date.</p>
@@ -281,6 +328,12 @@ export default function NewReservationScreen() {
                     <p className="font-heading font-bold text-gray-800">{r.departureTime}</p>
                     <p className="text-xs text-gray-500">Arrives {r.arrivalTime}</p>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full w-fit ${badge.cls}`}>{badge.label}</span>
+                    {r.price > 0 && (
+                      <span className="text-sm font-heading font-black text-gray-800">${r.price.toFixed(2)} / seat</span>
+                    )}
+                    {r.price === 0 && (
+                      <span className="text-xs font-bold text-green-600">Free</span>
+                    )}
                   </div>
                   <button className="btn-gold" style={{ width: 'auto', padding: '10px 16px', fontSize: 13 }}
                     onClick={() => { setSelectedRide(r); setStep(5) }}>
@@ -292,6 +345,7 @@ export default function NewReservationScreen() {
           </>
         )}
 
+        {/* Step 5 — Rider Info + Payment */}
         {step === 5 && (
           <>
             <p className="text-gray-300 text-sm">Confirm your rider details</p>
@@ -310,10 +364,59 @@ export default function NewReservationScreen() {
                 <p>📅 {date} · {selectedRide?.departureTime}</p>
                 <p>📍 {locLabel(pickup, pickupSub)}</p>
                 <p>🏁 {locLabel(dest, destSub)}</p>
+                {price > 0 && <p className="font-heading font-bold text-gray-800 mt-1">💳 Total: ${price.toFixed(2)}</p>}
               </div>
             </div>
+
+            {/* Payment section — only for paid routes */}
+            {paid && price > 0 && (
+              <div className="card p-5 flex flex-col gap-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">💳</span>
+                  <h3 className="font-heading font-bold text-gray-800">Payment</h3>
+                  <span className="ml-auto font-heading font-black text-gray-900">${price.toFixed(2)}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Name on Card</label>
+                  <input className="input-field" placeholder="Marcus Johnson" value={payment.name}
+                    onChange={e => setPayment(p => ({ ...p, name: e.target.value }))} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Card Number</label>
+                  <input className="input-field" placeholder="1234 5678 9012 3456" maxLength={19}
+                    value={payment.cardNumber}
+                    onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, '').slice(0, 16)
+                      const formatted = raw.match(/.{1,4}/g)?.join(' ') || raw
+                      setPayment(p => ({ ...p, cardNumber: formatted }))
+                    }} />
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex flex-col gap-1 flex-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Expiry</label>
+                    <input className="input-field" placeholder="MM/YY" maxLength={5}
+                      value={payment.expiry}
+                      onChange={e => {
+                        let v = e.target.value.replace(/\D/g, '').slice(0, 4)
+                        if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2)
+                        setPayment(p => ({ ...p, expiry: v }))
+                      }} />
+                  </div>
+                  <div className="flex flex-col gap-1 flex-1">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">CVV</label>
+                    <input className="input-field" placeholder="123" maxLength={4} type="password"
+                      value={payment.cvv}
+                      onChange={e => setPayment(p => ({ ...p, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))} />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 text-center">🔒 Demo only — no real payment is processed</p>
+              </div>
+            )}
+
             {bookingError && <p className="text-red-400 text-sm font-medium">{bookingError}</p>}
-            <button className="btn-gold" disabled={!riderName} onClick={completeReservation}>Complete Reservation ✓</button>
+            <button className="btn-gold" disabled={!riderName || !paymentValid} onClick={completeReservation}>
+              {price > 0 ? `Pay $${price.toFixed(2)} & Confirm ✓` : 'Complete Reservation ✓'}
+            </button>
           </>
         )}
       </div>

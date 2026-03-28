@@ -13,7 +13,7 @@ router.get('/', auth, async (req, res) => {
     const rides = await Ride.find({
       date, pickup, destination,
       $expr: { $lt: ['$seatsBooked', '$totalSeats'] },
-    }).sort({ departureTime: 1 })
+    }).sort({ departureMinutes: 1 })
 
     // filter past departures if searching today
     const today = new Date().toLocaleDateString('en-CA')

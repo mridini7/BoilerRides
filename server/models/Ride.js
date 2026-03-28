@@ -8,6 +8,8 @@ const rideSchema = new mongoose.Schema({
   arrivalTime:   { type: String, required: true },
   totalSeats:    { type: Number, required: true, default: 12 },
   seatsBooked:   { type: Number, required: true, default: 0 },
+  price:         { type: Number, required: true, default: 0 },  // 0 = free
+  departureMinutes: { type: Number, required: true, default: 0 }, // for sorting
 })
 
 export default mongoose.model('Ride', rideSchema)
