@@ -65,7 +65,6 @@ function generateRides(date, pickup, dest) {
   const isToday = date === now.toLocaleDateString('en-CA')
 
   return BASE_DEPARTURES.reduce((acc, dep, i) => {
-    // parse departure to check if it's in the future for today
     const [time, ampm] = dep.split(' ')
     let [h, m] = time.split(':').map(Number)
     if (ampm === 'PM' && h !== 12) h += 12
@@ -74,13 +73,10 @@ function generateRides(date, pickup, dest) {
       const rideDate = new Date(); rideDate.setHours(h, m, 0, 0)
       if (rideDate <= now) return acc
     }
-
     const rideId = getRideId(date, pickup, dest, dep)
-    const seatKey = `br_seats_${rideId}`
-    const stored = localStorage.getItem(seatKey)
+    const stored = localStorage.getItem(`br_seats_${rideId}`)
     const seats = stored !== null ? parseInt(stored) : BASE_SEATS[i]
     if (seats <= 0) return acc
-
     acc.push({ dep, arr: addMinutes(dep, duration), seats, totalSeats: BASE_SEATS[i], rideId })
     return acc
   }, [])
@@ -234,9 +230,13 @@ export default function NewReservationScreen() {
   const destValid = dest && (!LOCATIONS.find(x=>x.id===dest)?.sub || destSub)
 
   const findRides = () => {
-    setRides(generateRides(date, pickup, dest))
     setStep(4)
   }
+
+  // re-read localStorage every time step 4 is active so seat counts are always fresh
+  useEffect(() => {
+    if (step === 4) setRides(generateRides(date, pickup, dest))
+  }, [step])
 
   const completeReservation = () => {
     const res = {
@@ -251,6 +251,7 @@ export default function NewReservationScreen() {
       mobility,
       rideId: selectedRide.rideId,
       totalSeats: selectedRide.totalSeats,
+      currentSeats: selectedRide.seats,  // actual available count at time of booking
     }
     addReservation(res)
     setConfirmed(res)

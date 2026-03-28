@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState } from 'react'
 
 const AppContext = createContext(null)
 
@@ -43,9 +43,11 @@ export function AppProvider({ children }) {
     const existing = getReservations()
     const updated = [res, ...existing]
     localStorage.setItem(`br_reservations_${user.email}`, JSON.stringify(updated))
-    // decrement seat count for this ride slot
-    const seatKey = `br_seats_${res.date}_${res.rideId}`
-    const current = parseInt(localStorage.getItem(seatKey) ?? res.totalSeats)
+    const seatKey = `br_seats_${res.rideId}`
+    // res.currentSeats is the value shown to the user when they selected the ride
+    const current = localStorage.getItem(seatKey) !== null
+      ? parseInt(localStorage.getItem(seatKey))
+      : res.currentSeats
     localStorage.setItem(seatKey, Math.max(0, current - 1))
   }
 
