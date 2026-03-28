@@ -20,34 +20,76 @@ const LOCATION_MAPS = {
   ind: 'https://www.openstreetmap.org/export/embed.html?bbox=-86.3041%2C39.7117%2C-86.2441%2C39.7517&layer=mapnik&marker=39.7173%2C-86.2944',
 }
 
-function generateRides(date, pickup, dest) {
-  const times = [
-    { dep: '7:00 AM', arr: '9:30 AM', seats: 8 },
-    { dep: '9:30 AM', arr: '12:00 PM', seats: 3 },
-    { dep: '12:00 PM', arr: '2:30 PM', seats: 0 },
-    { dep: '2:30 PM', arr: '5:00 PM', seats: 11 },
-    { dep: '5:00 PM', arr: '7:30 PM', seats: 1 },
-    { dep: '7:30 PM', arr: '10:00 PM', seats: 6 },
-  ]
-  const now = new Date()
-  const isToday = date === now.toLocaleDateString('en-CA')
-  return times.filter(r => {
-    if (r.seats === 0) return false
-    if (isToday) {
-      const [time, ampm] = r.dep.split(' ')
-      let [h, m] = time.split(':').map(Number)
-      if (ampm === 'PM' && h !== 12) h += 12
-      if (ampm === 'AM' && h === 12) h = 0
-      const rideDate = new Date(); rideDate.setHours(h, m, 0, 0)
-      return rideDate > now
-    }
-    return true
-  })
+// Drive durations in minutes between location pairs (symmetric)
+const DURATIONS = {
+  'pmu-corec':  5,
+  'pmu-pui':   90,   // W. Lafayette → Indianapolis ~1h 30m
+  'pmu-ind':  105,   // W. Lafayette → IND airport ~1h 45m
+  'pmu-ord':  135,   // W. Lafayette → O'Hare ~2h 15m
+  'corec-pui':  90,
+  'corec-ind': 105,
+  'corec-ord': 135,
+  'pui-ind':    25,  // Purdue Indy → IND airport ~25m
+  'pui-ord':   165,  // Purdue Indy → O'Hare ~2h 45m
+  'ind-ord':   185,  // IND → O'Hare ~3h 5m
 }
 
-function seatBadge(seats) {
-  if (seats >= 6) return { label: `${seats} of 12 seats open`, cls: 'bg-green-100 text-green-700' }
-  if (seats >= 2) return { label: `${seats} of 12 seats open`, cls: 'bg-yellow-100 text-yellow-700' }
+function getDuration(a, b) {
+  return DURATIONS[`${a}-${b}`] || DURATIONS[`${b}-${a}`] || 60
+}
+
+function addMinutes(timeStr, mins) {
+  const [time, ampm] = timeStr.split(' ')
+  let [h, m] = time.split(':').map(Number)
+  if (ampm === 'PM' && h !== 12) h += 12
+  if (ampm === 'AM' && h === 12) h = 0
+  const total = h * 60 + m + mins
+  let rh = Math.floor(total / 60) % 24
+  const rm = total % 60
+  const rap = rh >= 12 ? 'PM' : 'AM'
+  if (rh > 12) rh -= 12
+  if (rh === 0) rh = 12
+  return `${rh}:${String(rm).padStart(2, '0')} ${rap}`
+}
+
+const BASE_DEPARTURES = ['6:00 AM', '8:30 AM', '11:00 AM', '1:30 PM', '4:00 PM', '6:30 PM']
+const BASE_SEATS      = [10, 8, 12, 11, 9, 10]
+
+function getRideId(date, pickup, dest, dep) {
+  return `${date}_${pickup}_${dest}_${dep.replace(/[: ]/g, '')}`
+}
+
+function generateRides(date, pickup, dest) {
+  const duration = getDuration(pickup, dest)
+  const now = new Date()
+  const isToday = date === now.toLocaleDateString('en-CA')
+
+  return BASE_DEPARTURES.reduce((acc, dep, i) => {
+    // parse departure to check if it's in the future for today
+    const [time, ampm] = dep.split(' ')
+    let [h, m] = time.split(':').map(Number)
+    if (ampm === 'PM' && h !== 12) h += 12
+    if (ampm === 'AM' && h === 12) h = 0
+    if (isToday) {
+      const rideDate = new Date(); rideDate.setHours(h, m, 0, 0)
+      if (rideDate <= now) return acc
+    }
+
+    const rideId = getRideId(date, pickup, dest, dep)
+    const seatKey = `br_seats_${rideId}`
+    const stored = localStorage.getItem(seatKey)
+    const seats = stored !== null ? parseInt(stored) : BASE_SEATS[i]
+    if (seats <= 0) return acc
+
+    acc.push({ dep, arr: addMinutes(dep, duration), seats, totalSeats: BASE_SEATS[i], rideId })
+    return acc
+  }, [])
+}
+
+function seatBadge(seats, total) {
+  const t = total || 12
+  if (seats / t > 0.5) return { label: `${seats} of ${t} seats open`, cls: 'bg-green-100 text-green-700' }
+  if (seats >= 2)      return { label: `${seats} of ${t} seats open`, cls: 'bg-yellow-100 text-yellow-700' }
   return { label: `${seats} seat left!`, cls: 'bg-red-100 text-red-700' }
 }
 
@@ -207,6 +249,8 @@ export default function NewReservationScreen() {
       arrivalTime: selectedRide.arr,
       riderName,
       mobility,
+      rideId: selectedRide.rideId,
+      totalSeats: selectedRide.totalSeats,
     }
     addReservation(res)
     setConfirmed(res)
@@ -309,7 +353,7 @@ export default function NewReservationScreen() {
                 <button className="btn-gold mt-4" onClick={() => setStep(1)}>Change Date</button>
               </div>
             ) : rides.map((r, i) => {
-              const badge = seatBadge(r.seats)
+              const badge = seatBadge(r.seats, r.totalSeats)
               return (
                 <div key={i} className="card p-4 flex items-center justify-between gap-3">
                   <div className="flex flex-col gap-1">

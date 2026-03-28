@@ -43,6 +43,10 @@ export function AppProvider({ children }) {
     const existing = getReservations()
     const updated = [res, ...existing]
     localStorage.setItem(`br_reservations_${user.email}`, JSON.stringify(updated))
+    // decrement seat count for this ride slot
+    const seatKey = `br_seats_${res.date}_${res.rideId}`
+    const current = parseInt(localStorage.getItem(seatKey) ?? res.totalSeats)
+    localStorage.setItem(seatKey, Math.max(0, current - 1))
   }
 
   const isLoggedIn = !!user && !!localStorage.getItem('br_session')

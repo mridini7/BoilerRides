@@ -58,15 +58,15 @@ function SettingsModal({ onClose }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
       <div
         className="card w-full max-w-[430px] rounded-t-3xl rounded-b-none screen-enter flex flex-col"
-        style={{ maxHeight: '85dvh' }}
+        style={{ maxHeight: '85dvh', height: '85dvh' }}
         onClick={e => e.stopPropagation()}>
         {/* Fixed handle + title */}
-        <div className="px-6 pt-4 pb-3 flex-shrink-0">
+        <div className="px-6 pt-4 pb-3" style={{ flexShrink: 0 }}>
           <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
           <h2 className="font-heading font-bold text-xl">Settings</h2>
         </div>
         {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1 px-6 pb-10 flex flex-col gap-3">
+        <div className="px-6 pb-10 flex flex-col gap-3" style={{ overflowY: 'auto', flex: '1 1 0', minHeight: 0 }}>
           <EditField
             label="Purdue Email"
             value={user?.email}
