@@ -62,6 +62,13 @@ function seatBadge(available, total) {
 
 function genConfirmNum() { return Math.random().toString(36).slice(2, 8).toUpperCase() }
 
+// Convert YYYY-MM-DD (internal/API format) to MM-DD-YYYY (display format)
+function displayDate(d) {
+  if (!d) return ''
+  const [y, m, day] = d.split('-')
+  return `${m}-${day}-${y}`
+}
+
 function formatPrice(price) {
   return price > 0 ? `$${price.toFixed(2)}` : 'Free'
 }
@@ -251,7 +258,7 @@ export default function NewReservationScreen() {
             <span className="font-bold text-gold-dark">#{confirmed.confirmationNumber}</span>
           </div>
           <div className="h-px bg-gray-100" />
-          <p className="text-sm text-gray-600">📅 <strong>{confirmed.date}</strong></p>
+          <p className="text-sm text-gray-600">📅 <strong>{displayDate(confirmed.date)}</strong></p>
           <p className="text-sm text-gray-600">🕐 {confirmed.departureTime} → {confirmed.arrivalTime}</p>
           <p className="text-sm text-gray-600">📍 {confirmed.pickup}</p>
           <p className="text-sm text-gray-600">🏁 {confirmed.destination}</p>
@@ -337,7 +344,7 @@ export default function NewReservationScreen() {
         {/* Step 4 — Rides */}
         {step === 4 && (
           <>
-            <p className="text-gray-300 text-sm">Available rides on <strong className="text-white">{date}</strong></p>
+            <p className="text-gray-300 text-sm">Available rides on <strong className="text-white">{displayDate(date)}</strong></p>
             {paid && (
               <div className="flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-xl px-4 py-3">
                 <span className="text-lg">💳</span>
@@ -391,7 +398,7 @@ export default function NewReservationScreen() {
                 </select>
               </div>
               <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 flex flex-col gap-1">
-                <p>📅 {date} · {selectedRide?.departureTime}</p>
+                <p>📅 {displayDate(date)} · {selectedRide?.departureTime}</p>
                 <p>📍 {locLabel(pickup, pickupSub)}</p>
                 <p>🏁 {locLabel(dest, destSub)}</p>
                 {price > 0 && <p className="font-heading font-bold text-gray-800 mt-1">💳 Total: ${price.toFixed(2)}</p>}
