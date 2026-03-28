@@ -3,19 +3,19 @@ import { useApp } from '../context/AppContext'
 import confetti from 'canvas-confetti'
 
 const LOCATIONS = [
-  // ── Purdue campuses ──────────────────────────────────────────────────────
-  { id: 'pmu',   label: 'Purdue West Lafayette — PMU',    sub: null },
-  { id: 'corec', label: 'Purdue West Lafayette — Co-Rec', sub: null },
-  { id: 'pui',   label: 'Purdue Indianapolis',            sub: null },
-  // ── Airports ─────────────────────────────────────────────────────────────
-  { id: 'ord',   label: "Chicago O'Hare (ORD)",           sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
-  { id: 'ind',   label: 'Indianapolis IND',               sub: ['Terminal A', 'Terminal B'] },
-  // ── Inter-college ─────────────────────────────────────────────────────────
+  // ── Airports (top) ──────────────────────────────────────────────────────
+  { id: 'ind',   label: 'Indianapolis IND',                   sub: ['Terminal A', 'Terminal B'] },
+  { id: 'ord',   label: "Chicago O'Hare (ORD)",               sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
+  // ── Purdue campuses (alphabetical) ─────────────────────────────────────────────────────
+  { id: 'corec', label: 'Purdue Co-Rec / WALC Area',          sub: null },
+  { id: 'pui',   label: 'Purdue Indianapolis',                sub: null },
+  { id: 'pmu',   label: 'Purdue West Lafayette — PMU',        sub: null },
+  // ── Colleges (alphabetical) ────────────────────────────────────────────────────────────────
+  { id: 'iu',    label: 'Indiana University Bloomington',     sub: null },
+  { id: 'osu',   label: 'Ohio State University',              sub: null },
   { id: 'uiuc',  label: 'Univ. of Illinois Urbana-Champaign', sub: null },
-  { id: 'umich', label: 'University of Michigan',         sub: null },
-  { id: 'iu',    label: 'Indiana University Bloomington', sub: null },
-  { id: 'osu',   label: 'Ohio State University',          sub: null },
-  { id: 'nd',    label: 'University of Notre Dame',       sub: null },
+  { id: 'umich', label: 'University of Michigan',             sub: null },
+  { id: 'nd',    label: 'University of Notre Dame',           sub: null },
 ]
 
 const LOCATION_MAPS = {

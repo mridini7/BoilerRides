@@ -3,19 +3,19 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 
 const SPOTS = [
-  // ── Purdue ────────────────────────────────────────────────────────────────
-  { id: 1,  name: 'Purdue Memorial Union (PMU)',              lat: 40.4259, lng: -86.9081, desc: 'West Lafayette — Main campus hub' },
-  { id: 2,  name: 'Co-Rec / WALC Area',                       lat: 40.4274, lng: -86.9167, desc: 'West Lafayette — Recreation & learning center' },
-  { id: 3,  name: 'Purdue Indianapolis Campus',               lat: 39.7771, lng: -86.1746, desc: 'Indianapolis — IUPUI area' },
-  // ── Airports ──────────────────────────────────────────────────────────────
+  // ── Airports (top) ────────────────────────────────────────────────────────────────
   { id: 4,  name: 'Indianapolis Airport (IND)',               lat: 39.7173, lng: -86.2944, desc: 'Indianapolis International — Terminals A & B' },
   { id: 5,  name: "Chicago O'Hare (ORD)",                     lat: 41.9742, lng: -87.9073, desc: "O'Hare International — Terminals 1, 2, 3, 5" },
-  // ── Inter-college ─────────────────────────────────────────────────────────
-  { id: 6,  name: 'Univ. of Illinois Urbana-Champaign',       lat: 40.1020, lng: -88.2272, desc: 'Champaign, IL — Main quad pickup' },
-  { id: 7,  name: 'University of Michigan',                   lat: 42.2780, lng: -83.7382, desc: 'Ann Arbor, MI — Central campus pickup' },
+  // ── Purdue campuses (alphabetical) ─────────────────────────────────────────────────────
+  { id: 2,  name: 'Purdue Co-Rec / WALC Area',                lat: 40.4274, lng: -86.9167, desc: 'West Lafayette — Recreation & learning center' },
+  { id: 3,  name: 'Purdue Indianapolis Campus',               lat: 39.7771, lng: -86.1746, desc: 'Indianapolis — IUPUI area' },
+  { id: 1,  name: 'Purdue Memorial Union (PMU)',              lat: 40.4259, lng: -86.9081, desc: 'West Lafayette — Main campus hub' },
+  // ── Colleges (alphabetical) ────────────────────────────────────────────────────────────────
   { id: 8,  name: 'Indiana University Bloomington',           lat: 39.1653, lng: -86.5264, desc: 'Bloomington, IN — Sample Gates pickup' },
   { id: 9,  name: 'Ohio State University',                    lat: 40.0076, lng: -83.0300, desc: 'Columbus, OH — Oval area pickup' },
-  { id: 10, name: 'University of Notre Dame',                 lat: 41.7052, lng: -86.2350, desc: 'Notre Dame, IN — Main gate pickup' },
+  { id: 6,  name: 'Univ. of Illinois Urbana-Champaign',       lat: 40.1020, lng: -88.2272, desc: 'Champaign, IL — Main quad pickup' },
+  { id: 10, name: 'University of Michigan',                   lat: 42.2780, lng: -83.7382, desc: 'Ann Arbor, MI — Central campus pickup' },
+  { id: 7,  name: 'University of Notre Dame',                 lat: 41.7052, lng: -86.2350, desc: 'Notre Dame, IN — Main gate pickup' },
 ]
 
 function deg2rad(d) { return d * Math.PI / 180 }
