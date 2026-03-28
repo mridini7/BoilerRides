@@ -2,14 +2,21 @@ import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 
 export default function ReservationsScreen() {
-  const { getReservations, setScreen } = useApp()
+  const { getReservations, cancelReservation, setScreen } = useApp()
   const [tab, setTab] = useState('upcoming')
-  const all = getReservations()
-  const now = Date.now()
+  const [confirmingId, setConfirmingId] = useState(null)
+  const [all, setAll] = useState(() => getReservations())
 
-  const upcoming = all.filter(r => new Date(r.date).getTime() >= new Date().setHours(0,0,0,0))
-  const past = all.filter(r => new Date(r.date).getTime() < new Date().setHours(0,0,0,0))
+  const today = new Date().setHours(0, 0, 0, 0)
+  const upcoming = all.filter(r => new Date(r.date).getTime() >= today)
+  const past     = all.filter(r => new Date(r.date).getTime() <  today)
   const list = tab === 'upcoming' ? upcoming : past
+
+  const handleCancel = (r) => {
+    cancelReservation(r)
+    setAll(getReservations())
+    setConfirmingId(null)
+  }
 
   return (
     <div className="screen-enter flex flex-col flex-1 pb-24">
@@ -19,7 +26,7 @@ export default function ReservationsScreen() {
 
       <div className="flex mx-5 bg-[#111] rounded-xl p-1 mb-5">
         {['upcoming', 'past'].map(t => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => { setTab(t); setConfirmingId(null) }}
             className={`flex-1 py-2.5 rounded-lg text-sm font-semibold capitalize transition-all duration-200 ${tab === t ? 'bg-gold text-black' : 'text-gray-400'}`}>
             {t}
           </button>
@@ -46,11 +53,38 @@ export default function ReservationsScreen() {
               </div>
               <span className="text-xs font-bold bg-gold/20 text-yellow-800 px-2 py-1 rounded-full">#{r.confirmationNumber}</span>
             </div>
-            <div className="flex flex-col gap-1 text-sm text-gray-600">
+            <div className="flex flex-col gap-1 text-sm text-gray-600 mb-4">
               <p>📍 <span className="font-medium">From:</span> {r.pickup}</p>
               <p>🏁 <span className="font-medium">To:</span> {r.destination}</p>
               <p>👤 <span className="font-medium">Rider:</span> {r.riderName}</p>
             </div>
+
+            {tab === 'upcoming' && (
+              confirmingId === r.id ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-red-700 font-semibold text-sm mb-3">Cancel this reservation?</p>
+                  <div className="flex gap-2">
+                    <button
+                      className="flex-1 py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold text-sm"
+                      onClick={() => setConfirmingId(null)}>
+                      Keep It
+                    </button>
+                    <button
+                      className="flex-1 py-2 rounded-lg font-bold text-white text-sm"
+                      style={{ background: '#DC2626' }}
+                      onClick={() => handleCancel(r)}>
+                      Yes, Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="w-full py-2.5 rounded-xl border-2 border-red-200 text-red-500 text-sm font-bold hover:bg-red-50 transition-colors"
+                  onClick={() => setConfirmingId(r.id)}>
+                  Cancel Ride
+                </button>
+              )
+            )}
           </div>
         ))}
       </div>

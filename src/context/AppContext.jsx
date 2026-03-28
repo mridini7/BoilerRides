@@ -40,15 +40,27 @@ export function AppProvider({ children }) {
   }
 
   const addReservation = (res) => {
-    const existing = getReservations()
-    const updated = [res, ...existing]
+    const updated = [res, ...getReservations()]
     localStorage.setItem(`br_reservations_${user.email}`, JSON.stringify(updated))
+    // decrement seat count
     const seatKey = `br_seats_${res.rideId}`
-    // res.currentSeats is the value shown to the user when they selected the ride
     const current = localStorage.getItem(seatKey) !== null
       ? parseInt(localStorage.getItem(seatKey))
       : res.currentSeats
     localStorage.setItem(seatKey, Math.max(0, current - 1))
+  }
+
+  const cancelReservation = (res) => {
+    const updated = getReservations().filter(r => r.id !== res.id)
+    localStorage.setItem(`br_reservations_${user.email}`, JSON.stringify(updated))
+    // restore the seat
+    if (res.rideId) {
+      const seatKey = `br_seats_${res.rideId}`
+      const current = localStorage.getItem(seatKey) !== null
+        ? parseInt(localStorage.getItem(seatKey))
+        : (res.currentSeats ?? res.totalSeats ?? 1)
+      localStorage.setItem(seatKey, current + 1)
+    }
   }
 
   const isLoggedIn = !!user && !!localStorage.getItem('br_session')
@@ -58,7 +70,7 @@ export function AppProvider({ children }) {
       user, login, logout, deleteAccount,
       screen, setScreen,
       reservationDraft, setReservationDraft,
-      getReservations, addReservation,
+      getReservations, addReservation, cancelReservation,
       isLoggedIn
     }}>
       {children}
