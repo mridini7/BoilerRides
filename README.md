@@ -1,4 +1,4 @@
-# BoilerRides (R2DU)
+# BoilerRides (R2U)
 A full-stack transit and ride-sharing platform built for students, staff and faculty at Purdue University.
 
 ## Project Description
@@ -136,6 +136,6 @@ The frontend will be available at `http://localhost:5173` and the API at `http:/
  
 ## 👥 Team
  
-Built with ❤️ at HackIndy by the Boiler Rides team - Ramitha, Mridini, and Meraj
+Built with ❤️ at HackIndy by the Boiler Rides team - Ramitha Viswasekar, Mridini Kullkarni, and Meraj Syeda
  
 ---
