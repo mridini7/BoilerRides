@@ -50,7 +50,7 @@ Our team moved from concept to a fully functional MVP during the hackathon. Here
 
 ---
 
-### 🛠️ Reservation Engine
+### Reservation Engine
  
 The heart of the platform — a robust seat-booking system designed to handle concurrent requests safely.
  
