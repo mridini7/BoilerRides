@@ -59,7 +59,7 @@ The heart of the platform — a robust seat-booking system designed to handle co
  
 ---
 
-### 📍 Geospatial Discovery
+### Geospatial Discovery
  
 Students shouldn't have to guess where to go. The platform uses real location data to surface the most relevant pickup points.
  
@@ -68,7 +68,7 @@ Students shouldn't have to guess where to go. The platform uses real location da
  
 ---
 
-### 🔐 Student-First Security
+### Student-First Security
  
 The platform is designed to be a trusted, closed environment for Purdue students only.
  
@@ -78,7 +78,7 @@ The platform is designed to be a trusted, closed environment for Purdue students
  
 ---
 
-### 🌀 Rolling Schedule Ecosystem (The Seeder)
+### Rolling Schedule Ecosystem (The Seeder)
  
 To simulate a living transit network, the team built a dynamic data seeder.
  
