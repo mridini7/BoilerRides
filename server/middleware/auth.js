@@ -1,12 +1,20 @@
 import jwt from 'jsonwebtoken'
+import HttpError from '../utils/HttpError.js' // Assuming you create this utility
 
 export default function auth(req, res, next) {
   const header = req.headers.authorization
-  if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' })
+  if (!header || !header.startsWith('Bearer ')) {
+    return next(new HttpError('Unauthorized: No token provided or invalid format.', 401));
+  }
+
   try {
-    req.user = jwt.verify(header.slice(7), process.env.JWT_SECRET)
+    const token = header.slice(7);
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not defined in environment variables.');
+    }
+    req.user = jwt.verify(token, process.env.JWT_SECRET)
     next()
   } catch {
-    res.status(401).json({ error: 'Invalid or expired token' })
+    next(new HttpError('Unauthorized: Invalid or expired token.', 401));
   }
 }

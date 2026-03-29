@@ -2,14 +2,28 @@ import { Router } from 'express'
 import auth from '../middleware/auth.js'
 import Reservation from '../models/Reservation.js'
 import Ride from '../models/Ride.js'
+import { body, validationResult } from 'express-validator' // For robust input validation
+import { v4 as uuidv4 } from 'uuid' // For generating unique confirmation numbers
 
 const router = Router()
 
 // Store human-readable labels in the reservation, not IDs
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, [
+  body('rideId').isMongoId().withMessage('Invalid ride ID.'),
+  body('riderName').trim().notEmpty().withMessage('Rider name is required.'),
+  body('mobility').optional().isIn(['None', 'Service Animal', 'Wheelchair', 'Walker']).withMessage('Invalid mobility option.'),
+  body('pickupLabel').trim().notEmpty().withMessage('Pickup location label is required.'),
+  body('destinationLabel').trim().notEmpty().withMessage('Destination location label is required.'),
+], async (req, res) => {
   try {
-    const { rideId, riderName, mobility, confirmationNumber, pickupLabel, destinationLabel } = req.body
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { rideId, riderName, mobility, pickupLabel, destinationLabel } = req.body
     const userId = req.user.userId
+    const confirmationNumber = uuidv4().slice(0, 8).toUpperCase() // Generate unique confirmation number on backend
 
     const ride = await Ride.findOneAndUpdate(
       { _id: rideId, $expr: { $lt: ['$seatsBooked', '$totalSeats'] } },
@@ -17,7 +31,7 @@ router.post('/', auth, async (req, res) => {
       { new: true }
     )
     if (!ride) return res.status(409).json({ error: 'No seats available on this ride.' })
-
+    
     const reservation = await Reservation.create({
       userId, rideId: ride._id, confirmationNumber,
       date: ride.date,
