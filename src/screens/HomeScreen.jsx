@@ -17,7 +17,7 @@ function EditField({ label, value, onSave, validate, type = 'text' }) {
   }
 
   return (
-    <div className="bg-gray-50 rounded-xl p-4">
+    <div className="bg-gray-50 rounded-xl p-3">
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">{label}</p>
         <button className="text-xs font-bold text-gold-dark" onClick={() => { setEditing(e => !e); setErr(''); setVal(value) }}>
@@ -25,13 +25,13 @@ function EditField({ label, value, onSave, validate, type = 'text' }) {
         </button>
       </div>
       {editing ? (
-        <div className="flex flex-col gap-2 mt-2">
+        <div className="flex flex-col gap-1.5 mt-1.5">
           <input className="input-field text-sm" type={type} value={val} onChange={e => setVal(e.target.value)} />
           {err && <p className="text-red-500 text-xs">{err}</p>}
-          <button className="btn-gold" style={{ padding: '8px', fontSize: 13 }} disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</button>
+          <button className="btn-gold" style={{ padding: '6px', fontSize: 12 }} disabled={saving} onClick={save}>{saving ? 'Saving…' : 'Save'}</button>
         </div>
       ) : (
-        <p className="font-medium text-gray-800">{type === 'password' ? '••••••••' : value}</p>
+        <p className="text-sm font-medium text-gray-800">{type === 'password' ? '••••••••' : value}</p>
       )}
     </div>
   )
@@ -45,15 +45,15 @@ function SettingsModal({ onClose }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
       <div
         className="card w-full max-w-[430px] rounded-t-3xl rounded-b-none screen-enter flex flex-col"
-        style={{ maxHeight: '85dvh', height: '85dvh' }}
+        style={{ maxHeight: '60dvh', height: '60dvh' }}
         onClick={e => e.stopPropagation()}>
         {/* Fixed handle + title */}
-        <div className="px-6 pt-4 pb-3" style={{ flexShrink: 0 }}>
-          <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-          <h2 className="font-heading font-bold text-xl">Settings</h2>
+        <div className="px-5 pt-3 pb-2" style={{ flexShrink: 0 }}>
+          <div className="w-8 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
+          <h2 className="font-heading font-bold text-lg">Settings</h2>
         </div>
         {/* Scrollable content */}
-        <div className="px-6 pb-10 flex flex-col gap-3" style={{ overflowY: 'auto', flex: '1 1 0', minHeight: 0 }}>
+        <div className="px-5 pb-8 flex flex-col gap-2" style={{ overflowY: 'auto', flex: '1 1 0', minHeight: 0 }}>
           <EditField
             label="Purdue Email"
             value={user?.email}

@@ -3,25 +3,54 @@ import { useApp } from '../context/AppContext'
 import confetti from 'canvas-confetti'
 
 const LOCATIONS = [
-  { id: 'pui',   label: 'Purdue Indianapolis',            sub: null },
-  { id: 'pmu',   label: 'Purdue West Lafayette — PMU',    sub: null },
-  { id: 'corec', label: 'Purdue West Lafayette — Co-Rec', sub: null },
-  { id: 'ord',   label: "Chicago O'Hare",                 sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
-  { id: 'ind',   label: 'Indianapolis IND',               sub: ['Terminal A', 'Terminal B'] },
+  // ── Airports (top) ──────────────────────────────────────────────────────
+  { id: 'ind',   label: 'Indianapolis Airport (IND)',           sub: ['Terminal A', 'Terminal B'] },
+  { id: 'ord',   label: "Chicago O'Hare Airport (ORD)",         sub: ['Terminal 1', 'Terminal 2', 'Terminal 3', 'Terminal 5'] },
+  // ── Purdue campuses (alphabetical) ─────────────────────────────────────────────────────
+  { id: 'corec', label: 'Purdue Co-Rec / WALC Area',          sub: null },
+  { id: 'pmu',   label: 'Purdue West Lafayette — PMU',        sub: null },
+  { id: 'pui',   label: 'Purdue Indianapolis',                sub: null },
+  // ── Colleges (alphabetical) ────────────────────────────────────────────────────────────────
+  { id: 'iu',    label: 'Indiana University Bloomington',     sub: null },
+  { id: 'osu',   label: 'Ohio State University',              sub: null },
+  { id: 'uiuc',  label: 'Univ. of Illinois Urbana-Champaign', sub: null },
+  { id: 'umich', label: 'University of Michigan',             sub: null },
+  { id: 'nd',    label: 'University of Notre Dame',           sub: null },
 ]
 
 const LOCATION_MAPS = {
-  pui:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.1946%2C39.7671%2C-86.1546%2C39.7871&layer=mapnik&marker=39.7771%2C-86.1746',
   pmu:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.9281%2C40.4159%2C-86.8881%2C40.4359&layer=mapnik&marker=40.4259%2C-86.9081',
   corec: 'https://www.openstreetmap.org/export/embed.html?bbox=-86.9367%2C40.4174%2C-86.8967%2C40.4374&layer=mapnik&marker=40.4274%2C-86.9167',
+  pui:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.1946%2C39.7671%2C-86.1546%2C39.7871&layer=mapnik&marker=39.7771%2C-86.1746',
   ord:   'https://www.openstreetmap.org/export/embed.html?bbox=-87.9466%2C41.9666%2C-87.8866%2C42.0066&layer=mapnik&marker=41.9742%2C-87.9073',
   ind:   'https://www.openstreetmap.org/export/embed.html?bbox=-86.3041%2C39.7117%2C-86.2441%2C39.7517&layer=mapnik&marker=39.7173%2C-86.2944',
+  uiuc:  'https://www.openstreetmap.org/export/embed.html?bbox=-88.2474%2C40.0814%2C-88.1874%2C40.1214&layer=mapnik&marker=40.1020%2C-88.2272',
+  umich: 'https://www.openstreetmap.org/export/embed.html?bbox=-83.7560%2C42.2560%2C-83.6960%2C42.2960&layer=mapnik&marker=42.2780%2C-83.7382',
+  iu:    'https://www.openstreetmap.org/export/embed.html?bbox=-86.5466%2C39.1466%2C-86.4866%2C39.1866&layer=mapnik&marker=39.1653%2C-86.5264',
+  osu:   'https://www.openstreetmap.org/export/embed.html?bbox=-83.0760%2C39.9760%2C-83.0160%2C40.0160&layer=mapnik&marker=40.0076%2C-83.0300',
+  nd:    'https://www.openstreetmap.org/export/embed.html?bbox=-86.2574%2C41.6874%2C-86.1974%2C41.7274&layer=mapnik&marker=41.7052%2C-86.2350',
 }
 
 const AIRPORT_IDS = ['ord', 'ind']
+const COLLEGE_IDS = ['uiuc', 'umich', 'iu', 'osu', 'nd']
+
+// Valid destinations for each pickup — mirrors seed.js ROUTES exactly
+const CONNECTIONS = {
+  pmu:   ['corec', 'pui', 'ind', 'ord', 'uiuc', 'umich', 'iu', 'osu', 'nd'],
+  corec: ['pmu', 'pui', 'ind', 'ord', 'uiuc', 'umich', 'iu', 'osu', 'nd'],
+  pui:   ['pmu', 'corec', 'ind', 'uiuc', 'umich', 'iu', 'osu', 'nd'],
+  ind:   ['pmu', 'corec', 'pui', 'ord'],
+  ord:   ['pmu', 'corec', 'uiuc', 'ind'],
+  uiuc:  ['pmu', 'corec', 'pui', 'ord', 'iu', 'nd', 'umich', 'osu'],
+  umich: ['pmu', 'corec', 'pui', 'uiuc', 'iu', 'nd', 'osu'],
+  iu:    ['pmu', 'corec', 'pui', 'uiuc', 'umich', 'nd', 'osu'],
+  osu:   ['pmu', 'corec', 'pui', 'uiuc', 'umich', 'iu', 'nd'],
+  nd:    ['pmu', 'corec', 'pui', 'uiuc', 'umich', 'iu', 'osu'],
+}
 
 function isPaidRoute(pickup, dest) {
-  return AIRPORT_IDS.includes(pickup) || AIRPORT_IDS.includes(dest)
+  return AIRPORT_IDS.includes(pickup) || AIRPORT_IDS.includes(dest) ||
+         COLLEGE_IDS.includes(pickup) || COLLEGE_IDS.includes(dest)
 }
 
 function seatBadge(available, total) {
@@ -32,6 +61,13 @@ function seatBadge(available, total) {
 }
 
 function genConfirmNum() { return Math.random().toString(36).slice(2, 8).toUpperCase() }
+
+// Convert YYYY-MM-DD (internal/API format) to MM-DD-YYYY (display format)
+function displayDate(d) {
+  if (!d) return ''
+  const [y, m, day] = d.split('-')
+  return `${m}-${day}-${y}`
+}
 
 function formatPrice(price) {
   return price > 0 ? `$${price.toFixed(2)}` : 'Free'
@@ -86,14 +122,15 @@ function Calendar({ selected, onSelect }) {
 
 // ─── Location Selector ────────────────────────────────────────────────────────
 
-function LocationSelect({ value, subValue, onChange, onSubChange, exclude, label }) {
+function LocationSelect({ value, subValue, onChange, onSubChange, exclude, allowedIds, label }) {
   const [expanded, setExpanded] = useState(null)
   return (
     <div className="flex flex-col gap-2">
       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</label>
       <div className="flex flex-col gap-2">
         {LOCATIONS.map(l => {
-          const disabled = l.id === exclude, sel = value === l.id, showMap = expanded === l.id || sel
+          const disabled = l.id === exclude || (allowedIds && !allowedIds.includes(l.id))
+          const sel = value === l.id, showMap = expanded === l.id || sel
           return (
             <div key={l.id}>
               <button disabled={disabled}
@@ -221,7 +258,7 @@ export default function NewReservationScreen() {
             <span className="font-bold text-gold-dark">#{confirmed.confirmationNumber}</span>
           </div>
           <div className="h-px bg-gray-100" />
-          <p className="text-sm text-gray-600">📅 <strong>{confirmed.date}</strong></p>
+          <p className="text-sm text-gray-600">📅 <strong>{displayDate(confirmed.date)}</strong></p>
           <p className="text-sm text-gray-600">🕐 {confirmed.departureTime} → {confirmed.arrivalTime}</p>
           <p className="text-sm text-gray-600">📍 {confirmed.pickup}</p>
           <p className="text-sm text-gray-600">🏁 {confirmed.destination}</p>
@@ -294,7 +331,7 @@ export default function NewReservationScreen() {
           <>
             <p className="text-gray-300 text-sm">Where are you headed?</p>
             <div className="card p-4">
-              <LocationSelect value={dest} subValue={destSub} onChange={setDest} onSubChange={setDestSub} exclude={pickup} label="Destination" />
+              <LocationSelect value={dest} subValue={destSub} onChange={setDest} onSubChange={setDestSub} exclude={pickup} allowedIds={pickup ? CONNECTIONS[pickup] : null} label="Destination" />
             </div>
             {dest && dest === pickup && <p className="text-red-400 text-sm font-medium">Pickup and destination cannot be the same.</p>}
             {ridesError && <p className="text-red-400 text-sm font-medium">{ridesError}</p>}
@@ -307,7 +344,7 @@ export default function NewReservationScreen() {
         {/* Step 4 — Rides */}
         {step === 4 && (
           <>
-            <p className="text-gray-300 text-sm">Available rides on <strong className="text-white">{date}</strong></p>
+            <p className="text-gray-300 text-sm">Available rides on <strong className="text-white">{displayDate(date)}</strong></p>
             {paid && (
               <div className="flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-xl px-4 py-3">
                 <span className="text-lg">💳</span>
@@ -361,7 +398,7 @@ export default function NewReservationScreen() {
                 </select>
               </div>
               <div className="bg-gray-50 rounded-xl p-3 text-sm text-gray-600 flex flex-col gap-1">
-                <p>📅 {date} · {selectedRide?.departureTime}</p>
+                <p>📅 {displayDate(date)} · {selectedRide?.departureTime}</p>
                 <p>📍 {locLabel(pickup, pickupSub)}</p>
                 <p>🏁 {locLabel(dest, destSub)}</p>
                 {price > 0 && <p className="font-heading font-bold text-gray-800 mt-1">💳 Total: ${price.toFixed(2)}</p>}

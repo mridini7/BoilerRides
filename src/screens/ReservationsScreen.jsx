@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 
+function displayDate(d) {
+  if (!d) return ''
+  const [y, m, day] = d.split('-')
+  return `${m}-${day}-${y}`
+}
+
 export default function ReservationsScreen() {
   const { getReservations, cancelReservation, setScreen } = useApp()
   const [upcoming, setUpcoming] = useState([])
@@ -52,7 +58,7 @@ export default function ReservationsScreen() {
           <div key={r._id} className="card p-5">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="font-heading font-bold text-gray-800">{r.date}</p>
+                <p className="font-heading font-bold text-gray-800">{displayDate(r.date)}</p>
                 <p className="text-sm text-gray-500">{r.departureTime} → {r.arrivalTime}</p>
               </div>
               <span className="text-xs font-bold bg-gold/20 text-yellow-800 px-2 py-1 rounded-full">#{r.confirmationNumber}</span>
