@@ -133,6 +133,16 @@ npm run dev
 The frontend will be available at `http://localhost:5173` and the API at `http://localhost:3000`.
  
 ---
+
+## AI Usage
+ 
+Boiler Rides was built with AI assistance throughout the development process:
+ 
+- **Claude** — Used to craft a detailed prompt based on the features we wanted, which served as the foundation for code generation.
+- **Amazon Q** — Took the Claude-generated prompt and scaffolded the initial BoilerRides application.
+- **Gemini** — Used in the finalization phase to debug and clean up frontend and backend issues.
+ 
+---
  
 ## 👥 Team
  
